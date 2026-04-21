@@ -3,48 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opo-Po | Tramos</title>
+    <title>Opo-Po | Privado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body { user-select: none; -webkit-user-select: none; }
+        /* Animación suave para la entrada */
+        #app.visible { opacity: 1; pointer-events: auto; }
+    </style>
 </head>
 <body class="bg-slate-100 min-h-screen p-4 font-sans text-slate-900">
 
-    <div id="app" class="max-w-3xl mx-auto">
+    <div id="_0xlogin" class="fixed inset-0 z-[999] bg-indigo-600 flex items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <h1 class="text-2xl font-black text-indigo-600 mb-6 italic">ACCESO RESTRINGIDO</h1>
+            <input type="password" id="_0xpass" placeholder="Introduce clave..." 
+                class="w-full p-4 bg-slate-100 rounded-2xl border-b-4 border-indigo-400 outline-none mb-4 text-center font-bold">
+            <button onclick="_0x55a2()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all">
+                ENTRAR
+            </button>
+            <p id="_0xerr" class="text-red-500 text-xs mt-4 font-bold hidden">CLAVE INCORRECTA</p>
+        </div>
+    </div>
+
+    <div id="app" class="max-w-3xl mx-auto opacity-0 pointer-events-none transition-opacity duration-500">
         <div id="setup" class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 mt-10">
             <h1 class="text-3xl font-black text-indigo-600 mb-2 text-center italic">OPO-PO</h1>
-            
             <div class="space-y-6">
                 <div class="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200">
                     <label class="block text-xs font-black text-slate-400 mb-2 uppercase">Cargar examen (.csv)</label>
                     <input type="file" id="csv" accept=".csv" class="w-full text-sm">
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button onclick="start('guiado')" class="bg-indigo-600 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">MODO GUIADO</button>
-                    <button onclick="start('simulacion')" class="bg-slate-800 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-black transition-all">SIMULACIÓN</button>
-                    <button onclick="start('revision')" class="bg-emerald-500 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-emerald-600 transition-all">REVISIÓN</button>
+                    <button onclick="start('guiado')" class="bg-indigo-600 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-indigo-700">MODO GUIADO</button>
+                    <button onclick="start('simulacion')" class="bg-slate-800 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-black">SIMULACIÓN</button>
+                    <button onclick="start('revision')" class="bg-emerald-500 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-emerald-600">REVISIÓN</button>
                 </div>
-
                 <div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
-                    <label class="block text-xs font-black text-indigo-400 mb-4 uppercase text-center">Entrenamiento por Tramos (ID Original)</label>
+                    <label class="block text-xs font-black text-indigo-400 mb-4 uppercase text-center">Entrenamiento por Tramos</label>
                     <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                            <span class="text-[10px] font-bold text-indigo-300 ml-2 uppercase">Desde</span>
-                            <input type="number" id="from-id" value="1" class="w-full p-3 bg-white rounded-xl font-bold outline-none border-b-4 border-indigo-400">
-                        </div>
-                        <div class="flex-1">
-                            <span class="text-[10px] font-bold text-indigo-300 ml-2 uppercase">Hasta</span>
-                            <input type="number" id="to-id" value="40" class="w-full p-3 bg-white rounded-xl font-bold outline-none border-b-4 border-indigo-400">
-                        </div>
-                        <button onclick="start('tramos')" class="mt-4 bg-indigo-500 text-white px-6 py-3 rounded-xl font-black shadow-md hover:bg-indigo-600 self-end transition-all text-sm">
-                            IR
-                        </button>
+                        <input type="number" id="from-id" value="1" class="flex-1 p-3 bg-white rounded-xl font-bold outline-none border-b-4 border-indigo-400">
+                        <input type="number" id="to-id" value="40" class="flex-1 p-3 bg-white rounded-xl font-bold outline-none border-b-4 border-indigo-400">
+                        <button onclick="start('tramos')" class="bg-indigo-500 text-white px-6 py-3 rounded-xl font-black shadow-md">IR</button>
                     </div>
                 </div>
-
-                <div class="pt-4 border-t border-slate-100">
-                    <label class="block text-xs font-black text-slate-400 mb-2 uppercase text-center">Nº preguntas para Test Aleatorio:</label>
-                    <input type="number" id="limit" value="20" class="w-full p-3 bg-slate-50 rounded-xl text-center font-bold outline-none border-b-4 border-indigo-500">
+                <div class="pt-4 border-t border-slate-100 text-center">
+                    <label class="block text-xs font-black text-slate-400 mb-2 uppercase">Nº preguntas Aleatorias:</label>
+                    <input type="number" id="limit" value="20" class="w-24 p-3 bg-slate-50 rounded-xl text-center font-bold outline-none border-b-4 border-indigo-500">
                 </div>
             </div>
         </div>
@@ -54,9 +59,7 @@
             <div class="p-8">
                 <div class="flex justify-between items-center mb-6">
                     <span id="meta" class="text-xs font-black text-slate-400 uppercase tracking-widest"></span>
-                    <button onclick="exitToMenu()" class="bg-red-50 text-red-500 px-4 py-2 rounded-full text-xs font-black uppercase hover:bg-red-500 hover:text-white transition-all">
-                        ✖ Salir al Menú
-                    </button>
+                    <button onclick="exitToMenu()" class="bg-red-50 text-red-500 px-4 py-2 rounded-full text-xs font-black uppercase hover:bg-red-500 hover:text-white transition-all">✖ Salir</button>
                 </div>
                 <h2 id="q-text" class="text-xl font-bold text-slate-800 mb-2 leading-relaxed"></h2>
                 <p id="q-real-id" class="text-[10px] text-slate-300 font-mono mb-6 uppercase tracking-widest"></p>
@@ -66,26 +69,48 @@
         </div>
 
         <div id="results" class="hidden space-y-6 py-10">
-            <div class="bg-white p-10 rounded-3xl shadow-xl border border-slate-200 relative">
-                <button onclick="exitToMenu()" class="absolute top-6 right-6 text-xs font-black text-slate-300 hover:text-red-500 uppercase tracking-tighter transition-all">
-                    ← Volver al Inicio
-                </button>
-                <div class="text-center">
-                    <h2 id="res-title" class="text-2xl font-black mb-4 uppercase italic">Resultado Final</h2>
-                    <p id="score" class="text-7xl font-black text-indigo-600 mb-6"></p>
-                    <button onclick="exitToMenu()" class="bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition-transform">NUEVO EXAMEN</button>
-                </div>
+            <div class="bg-white p-10 rounded-3xl shadow-xl border border-slate-200 text-center">
+                <h2 id="res-title" class="text-2xl font-black mb-4 uppercase italic">Resultado Final</h2>
+                <p id="score" class="text-7xl font-black text-indigo-600 mb-6"></p>
+                <button onclick="exitToMenu()" class="bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition-transform">NUEVO EXAMEN</button>
             </div>
             <div id="res-list" class="space-y-4"></div>
         </div>
     </div>
 
     <script>
+        // 1. BLOQUEOS DE SEGURIDAD
+        document.oncontextmenu = () => false;
+        document.onkeydown = (e) => {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
+        };
+
+        // 2. LÓGICA DE CONTRASEÑA (202526)
+        function _0x55a2() {
+            const val = document.getElementById('_0xpass').value;
+            // "MjAyNTI2" es "202526" cifrado en base64 para despistar en Git
+            if (btoa(val) === "MjAyNTI2") {
+                document.getElementById('_0xlogin').style.display = 'none';
+                const app = document.getElementById('app');
+                app.classList.add('visible');
+            } else {
+                document.getElementById('_0xerr').classList.remove('hidden');
+                document.getElementById('_0xpass').value = "";
+            }
+        }
+
+        // 3. EVENTO ENTER PARA LOGIN
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('_0xpass').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') _0x55a2();
+            });
+        });
+
+        // 4. LÓGICA DEL EXAMEN
         let db = [], current = [], mode = '', idx = 0, answers = [];
 
         function exitToMenu() {
-            idx = 0;
-            answers = [];
+            idx = 0; answers = [];
             document.getElementById('quiz').classList.add('hidden');
             document.getElementById('results').classList.add('hidden');
             document.getElementById('setup').classList.remove('hidden');
@@ -93,7 +118,7 @@
 
         async function start(m) {
             const file = document.getElementById('csv').files[0];
-            if(!file) return alert("Por favor, selecciona el archivo CSV generado.");
+            if(!file) return alert("Por favor, carga el archivo CSV.");
             
             mode = m;
             const text = await file.text();
@@ -103,7 +128,6 @@
                 const cells = line.match(/(".*?"|[^;]+)/g).map(c => c.replace(/^"|"$/g, '').trim());
                 const valCorrecta = cells[3] || "1";
                 const correctasArr = valCorrecta.toString().split('/').map(v => parseInt(v.trim()));
-
                 return {
                     idReal: parseInt(cells[0]), 
                     pregunta: cells[1],
@@ -118,9 +142,8 @@
             } else if (mode === 'tramos') {
                 const from = parseInt(document.getElementById('from-id').value);
                 const to = parseInt(document.getElementById('to-id').value);
-                current = db.filter(q => q.idReal >= from && q.idReal <= to);
-                if(current.length === 0) return alert("No hay preguntas en ese tramo.");
-                current.sort((a, b) => a.idReal - b.idReal);
+                current = db.filter(q => q.idReal >= from && q.idReal <= to).sort((a,b) => a.idReal - b.idReal);
+                if(current.length === 0) return alert("Tramo vacío.");
                 launchQuiz();
             } else {
                 db.sort(() => Math.random() - 0.5);
@@ -139,30 +162,18 @@
 
         function render() {
             const q = current[idx];
-            let fullText = q.pregunta;
-            if(q.correctas.includes(5)) {
-                fullText += ' <span style="color:red; font-weight:bold;">NULA</span>';
-            }
-            document.getElementById('q-text').innerHTML = fullText;
-
-            const idRealEl = document.getElementById('q-real-id');
-            if(idRealEl) idRealEl.innerText = `ID Original: ${q.idReal}`;
-
+            document.getElementById('q-text').innerHTML = q.pregunta + (q.correctas.includes(5) ? ' <span class="text-red-600 font-bold">NULA</span>' : '');
+            document.getElementById('q-real-id').innerText = `ID Original: ${q.idReal}`;
             document.getElementById('meta').innerText = `Pregunta ${idx + 1} de ${current.length}`;
             document.getElementById('bar').style.width = `${((idx + 1) / current.length) * 100}%`;
             
             const container = document.getElementById('opts');
             container.innerHTML = '';
-
             q.opciones.forEach((o, i) => {
                 const b = document.createElement('button');
-                let baseStyle = "w-full text-left p-4 rounded-2xl border-2 transition-all text-sm font-semibold ";
-                if (answers[idx] === i) {
-                    baseStyle += "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-inner";
-                } else {
-                    baseStyle += "border-slate-100 hover:border-indigo-200 hover:bg-slate-50 text-slate-600";
-                }
-                b.className = baseStyle;
+                let style = "w-full text-left p-4 rounded-2xl border-2 transition-all text-sm font-semibold ";
+                style += (answers[idx] === i) ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-inner" : "border-slate-100 hover:bg-slate-50 text-slate-600";
+                b.className = style;
                 b.innerText = o;
                 b.onclick = () => select(i, b);
                 container.appendChild(b);
@@ -173,17 +184,9 @@
         function renderNav() {
             const actions = document.getElementById('actions');
             const isLast = idx === current.length - 1;
-            const isFirst = idx === 0;
-
             actions.innerHTML = `
-                <button onclick="goPrev()" ${isFirst ? 'disabled' : ''} 
-                    class="flex-1 p-4 rounded-2xl font-bold border-2 border-slate-200 text-slate-400 disabled:opacity-20">
-                    ← ANTERIOR
-                </button>
-                <button onclick="goNext()" 
-                    class="flex-[2] bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
-                    ${isLast ? 'FINALIZAR' : 'SIGUIENTE →'}
-                </button>
+                <button onclick="goPrev()" ${idx === 0 ? 'disabled' : ''} class="flex-1 p-4 rounded-2xl font-bold border-2 border-slate-200 text-slate-400 disabled:opacity-20">←</button>
+                <button onclick="goNext()" class="flex-[2] bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">${isLast ? 'FINALIZAR' : 'SIGUIENTE →'}</button>
             `;
         }
 
@@ -193,86 +196,40 @@
             if(mode === 'guiado' || mode === 'tramos') {
                 const btns = document.querySelectorAll('#opts button');
                 btns.forEach(b => b.disabled = true);
-                
-                if(q.correctas.includes(5)) {
-                    btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-orange-500 bg-orange-50 text-orange-700";
-                } else {
-                    const isOk = q.correctas.includes(i + 1);
-                    if(isOk) {
-                        btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-green-500 bg-green-50 text-green-700";
-                        confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
-                    } else {
-                        btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-red-500 bg-red-50 text-red-700";
-                    }
-                    q.correctas.forEach(cNum => {
-                        if(btns[cNum-1]) {
-                            btns[cNum-1].className = "w-full text-left p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-green-700 font-bold";
-                        }
-                    });
-                }
-            } else {
-                render();
-            }
+                const isOk = q.correctas.includes(i + 1) || q.correctas.includes(5);
+                btn.className = `w-full text-left p-4 rounded-2xl border-2 font-bold ${isOk ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700'}`;
+                if(isOk && !q.correctas.includes(5)) confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
+                q.correctas.forEach(c => { if(btns[c-1]) btns[c-1].className = "w-full text-left p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-green-700 font-bold"; });
+            } else { render(); }
         }
 
         function goPrev() { if (idx > 0) { idx--; render(); } }
         function goNext() { if (idx < current.length - 1) { idx++; render(); } else { showResults(false); } }
 
-        function showResults(isOnlyRevision) {
+        function showResults(isRev) {
             document.getElementById('setup').classList.add('hidden');
             document.getElementById('quiz').classList.add('hidden');
             document.getElementById('results').classList.remove('hidden');
             const list = document.getElementById('res-list');
             list.innerHTML = '';
             let hits = 0;
-
             current.forEach((q, i) => {
-                const uAns = answers[i];
-                const isNula = q.correctas.includes(5);
-                const ok = q.correctas.includes(uAns + 1);
-                
-                if(ok || isNula) hits++; 
-                
+                const ok = q.correctas.includes(answers[i] + 1) || q.correctas.includes(5);
+                if(ok) hits++;
                 const card = document.createElement('div');
-                let cardColor = isOnlyRevision ? 'border-emerald-400' : (ok ? 'border-green-500' : 'border-red-500');
-                if(isNula) cardColor = 'border-orange-400';
-
-                card.className = `bg-white p-6 rounded-3xl shadow-sm border-l-[12px] mb-4 ${cardColor}`;
-                
-                let optsHtml = '<div class="mt-4 space-y-2">';
-                q.opciones.forEach((opt, index) => {
-                    const esEstaCorrecta = q.correctas.includes(index + 1);
-                    const esLaQueEligio = (index === uAns);
-
+                const color = q.correctas.includes(5) ? 'border-orange-400' : (ok ? 'border-green-500' : 'border-red-500');
+                card.className = `bg-white p-6 rounded-3xl shadow-sm border-l-[12px] mb-4 ${color}`;
+                let h = `<p class="font-bold text-slate-800">${i+1}. ${q.pregunta}</p><div class="mt-4 space-y-2">`;
+                q.opciones.forEach((opt, ix) => {
                     let css = "border-slate-50 text-slate-400";
-                    let icon = "";
-
-                    // Si es Nula, no marcamos nada como "correcto" con checks, solo mostramos las opciones
-                    if (!isNula) {
-                        if (esEstaCorrecta) {
-                            css = "border-green-500 bg-green-50 text-green-700 font-bold";
-                            icon = "✅ ";
-                        } else if (!isOnlyRevision && esLaQueEligio && !ok) {
-                            css = "border-red-500 bg-red-50 text-red-700 font-bold";
-                            icon = "❌ ";
-                        }
-                    } else {
-                        // En caso de nula, si el usuario marcó esta opción, la destacamos en naranja suave
-                        if(esLaQueEligio && !isOnlyRevision) css = "border-orange-200 bg-orange-50 text-orange-600 font-semibold";
-                    }
-                    
-                    optsHtml += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${icon}${opt}</div>`;
+                    if(q.correctas.includes(ix+1)) css = "border-green-500 bg-green-50 text-green-700 font-bold";
+                    else if(!isRev && ix === answers[i] && !ok) css = "border-red-500 bg-red-50 text-red-700 font-bold";
+                    h += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${opt}</div>`;
                 });
-                optsHtml += '</div>';
-
-                let qFinalText = q.pregunta;
-                if(isNula) qFinalText += ' <span style="color:red; font-weight:bold;">NULA</span>';
-
-                card.innerHTML = `<p class="font-bold text-slate-800 leading-tight">${i + 1}. ${qFinalText}</p><p class="text-[9px] text-slate-300 mt-1 uppercase font-mono">(ID: ${q.idReal})</p>${optsHtml}`;
+                card.innerHTML = h + '</div>';
                 list.appendChild(card);
             });
-            document.getElementById('score').innerText = isOnlyRevision ? "Revisión" : `${hits} / ${current.length}`;
-            if(isOnlyRevision) document.getElementById('res-title').innerText = "Manual de Estudio";
+            document.getElementById('score').innerText = isRev ? "MODO REVISIÓN" : `${hits} / ${current.length}`;
         }
     </script>
 </body>
