@@ -101,11 +101,16 @@
             
             db = lines.slice(1).map(line => {
                 const cells = line.match(/(".*?"|[^;]+)/g).map(c => c.replace(/^"|"$/g, '').trim());
+                
+                // Lógica mejorada para leer la columna "correcta" (soporta 2/4 o similar)
+                const valCorrecta = cells[3] || "1";
+                const correctasArr = valCorrecta.toString().split('/').map(v => parseInt(v.trim()));
+
                 return {
                     idReal: parseInt(cells[0]), 
                     pregunta: cells[1],
                     opciones: cells[2].split(' | '),
-                    correcta: parseInt(cells[3]) || 1
+                    correctas: correctasArr // Ahora es un Array
                 };
             });
 
@@ -115,10 +120,8 @@
             } else if (mode === 'tramos') {
                 const from = parseInt(document.getElementById('from-id').value);
                 const to = parseInt(document.getElementById('to-id').value);
-                // Filtramos por el ID Real de la primera columna
                 current = db.filter(q => q.idReal >= from && q.idReal <= to);
                 if(current.length === 0) return alert("No hay preguntas en ese tramo.");
-                // En tramos solemos querer el orden correlativo
                 current.sort((a, b) => a.idReal - b.idReal);
                 launchQuiz();
             } else {
@@ -138,7 +141,13 @@
 
         function render() {
             const q = current[idx];
-            document.getElementById('q-text').innerText = q.pregunta;
+            
+            let fullText = q.pregunta;
+            if(q.correctas.includes(5)) {
+                fullText += ' <span style="color:red; font-weight:bold;">NULA</span>';
+            }
+            document.getElementById('q-text').innerHTML = fullText;
+
             const idRealEl = document.getElementById('q-real-id');
             if(idRealEl) idRealEl.innerText = `ID Original: ${q.idReal}`;
 
@@ -184,13 +193,29 @@
         function select(i, btn) {
             const q = current[idx];
             answers[idx] = i;
-            if(mode === 'guiado' || mode === 'tramos') { // En tramos activamos feedback inmediato para estudiar mejor
+            if(mode === 'guiado' || mode === 'tramos') {
                 const btns = document.querySelectorAll('#opts button');
                 btns.forEach(b => b.disabled = true);
-                const isOk = (i === q.correcta - 1);
-                btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold " + (isOk ? "border-green-500 bg-green-50 text-green-700" : "border-red-500 bg-red-50 text-red-700");
-                if(!isOk) btns[q.correcta-1].className = "w-full text-left p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-green-700 font-bold";
-                if(isOk) confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
+                
+                if(q.correctas.includes(5)) {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-orange-500 bg-orange-50 text-orange-700";
+                } else {
+                    const isOk = q.correctas.includes(i + 1); // Comprobamos si el índice está en el array de correctas
+                    
+                    if(isOk) {
+                        btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-green-500 bg-green-50 text-green-700";
+                        confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
+                    } else {
+                        btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-red-500 bg-red-50 text-red-700";
+                    }
+
+                    // Siempre mostramos TODAS las opciones que eran correctas
+                    q.correctas.forEach(cNum => {
+                        if(btns[cNum-1]) {
+                            btns[cNum-1].className = "w-full text-left p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-green-700 font-bold";
+                        }
+                    });
+                }
             } else {
                 render();
             }
@@ -209,18 +234,45 @@
 
             current.forEach((q, i) => {
                 const uAns = answers[i];
-                const cIdx = q.correcta - 1;
-                const ok = uAns === cIdx;
-                if(ok) hits++;
+                const isNula = q.correctas.includes(5);
+                const ok = q.correctas.includes(uAns + 1);
+                
+                if(ok || isNula) hits++; 
+                
                 const card = document.createElement('div');
-                card.className = `bg-white p-6 rounded-3xl shadow-sm border-l-[12px] mb-4 ${isOnlyRevision ? 'border-emerald-400' : (ok ? 'border-green-500' : 'border-red-500')}`;
+                let cardColor = isOnlyRevision ? 'border-emerald-400' : (ok ? 'border-green-500' : 'border-red-500');
+                if(isNula) cardColor = 'border-orange-400';
+
+                card.className = `bg-white p-6 rounded-3xl shadow-sm border-l-[12px] mb-4 ${cardColor}`;
+                
                 let optsHtml = '<div class="mt-4 space-y-2">';
-                q.opciones.forEach((opt, index) => {
-                    let css = (index === cIdx) ? "border-green-500 bg-green-50 text-green-700 font-bold" : (!isOnlyRevision && index === uAns ? "border-red-500 bg-red-50 text-red-700 font-bold" : "border-slate-50 text-slate-400");
-                    let icon = (index === cIdx) ? "✅ " : (!isOnlyRevision && index === uAns ? "❌ " : "");
-                    optsHtml += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${icon}${opt}</div>`;
-                });
-                card.innerHTML = `<p class="font-bold text-slate-800 leading-tight">${i + 1}. ${q.pregunta}</p><p class="text-[9px] text-slate-300 mt-1 uppercase font-mono">(ID: ${q.idReal})</p>${optsHtml}`;
+                if(!isNula) {
+                    q.opciones.forEach((opt, index) => {
+                        const esEstaCorrecta = q.correctas.includes(index + 1);
+                        const esLaQueEligio = (index === uAns);
+
+                        let css = "border-slate-50 text-slate-400";
+                        let icon = "";
+
+                        if (esEstaCorrecta) {
+                            css = "border-green-500 bg-green-50 text-green-700 font-bold";
+                            icon = "✅ ";
+                        } else if (!isOnlyRevision && esLaQueEligio && !ok) {
+                            css = "border-red-500 bg-red-50 text-red-700 font-bold";
+                            icon = "❌ ";
+                        }
+                        
+                        optsHtml += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${icon}${opt}</div>`;
+                    });
+                } else {
+                    optsHtml += `<div class="p-3 border-2 border-orange-200 bg-orange-50 text-orange-700 rounded-xl text-sm font-bold italic">Pregunta marcada como NULA en el examen oficial.</div>`;
+                }
+                optsHtml += '</div>';
+
+                let qFinalText = q.pregunta;
+                if(isNula) qFinalText += ' <span style="color:red; font-weight:bold;">NULA</span>';
+
+                card.innerHTML = `<p class="font-bold text-slate-800 leading-tight">${i + 1}. ${qFinalText}</p><p class="text-[9px] text-slate-300 mt-1 uppercase font-mono">(ID: ${q.idReal})</p>${optsHtml}`;
                 list.appendChild(card);
             });
             document.getElementById('score').innerText = isOnlyRevision ? "Revisión" : `${hits} / ${current.length}`;
