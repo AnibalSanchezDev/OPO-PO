@@ -101,8 +101,6 @@
             
             db = lines.slice(1).map(line => {
                 const cells = line.match(/(".*?"|[^;]+)/g).map(c => c.replace(/^"|"$/g, '').trim());
-                
-                // Lógica mejorada para leer la columna "correcta" (soporta 2/4 o similar)
                 const valCorrecta = cells[3] || "1";
                 const correctasArr = valCorrecta.toString().split('/').map(v => parseInt(v.trim()));
 
@@ -110,7 +108,7 @@
                     idReal: parseInt(cells[0]), 
                     pregunta: cells[1],
                     opciones: cells[2].split(' | '),
-                    correctas: correctasArr // Ahora es un Array
+                    correctas: correctasArr 
                 };
             });
 
@@ -141,7 +139,6 @@
 
         function render() {
             const q = current[idx];
-            
             let fullText = q.pregunta;
             if(q.correctas.includes(5)) {
                 fullText += ' <span style="color:red; font-weight:bold;">NULA</span>';
@@ -200,16 +197,13 @@
                 if(q.correctas.includes(5)) {
                     btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-orange-500 bg-orange-50 text-orange-700";
                 } else {
-                    const isOk = q.correctas.includes(i + 1); // Comprobamos si el índice está en el array de correctas
-                    
+                    const isOk = q.correctas.includes(i + 1);
                     if(isOk) {
                         btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-green-500 bg-green-50 text-green-700";
                         confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
                     } else {
                         btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold border-red-500 bg-red-50 text-red-700";
                     }
-
-                    // Siempre mostramos TODAS las opciones que eran correctas
                     q.correctas.forEach(cNum => {
                         if(btns[cNum-1]) {
                             btns[cNum-1].className = "w-full text-left p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-green-700 font-bold";
@@ -246,14 +240,15 @@
                 card.className = `bg-white p-6 rounded-3xl shadow-sm border-l-[12px] mb-4 ${cardColor}`;
                 
                 let optsHtml = '<div class="mt-4 space-y-2">';
-                if(!isNula) {
-                    q.opciones.forEach((opt, index) => {
-                        const esEstaCorrecta = q.correctas.includes(index + 1);
-                        const esLaQueEligio = (index === uAns);
+                q.opciones.forEach((opt, index) => {
+                    const esEstaCorrecta = q.correctas.includes(index + 1);
+                    const esLaQueEligio = (index === uAns);
 
-                        let css = "border-slate-50 text-slate-400";
-                        let icon = "";
+                    let css = "border-slate-50 text-slate-400";
+                    let icon = "";
 
+                    // Si es Nula, no marcamos nada como "correcto" con checks, solo mostramos las opciones
+                    if (!isNula) {
                         if (esEstaCorrecta) {
                             css = "border-green-500 bg-green-50 text-green-700 font-bold";
                             icon = "✅ ";
@@ -261,12 +256,13 @@
                             css = "border-red-500 bg-red-50 text-red-700 font-bold";
                             icon = "❌ ";
                         }
-                        
-                        optsHtml += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${icon}${opt}</div>`;
-                    });
-                } else {
-                    optsHtml += `<div class="p-3 border-2 border-orange-200 bg-orange-50 text-orange-700 rounded-xl text-sm font-bold italic">Pregunta marcada como NULA en el examen oficial.</div>`;
-                }
+                    } else {
+                        // En caso de nula, si el usuario marcó esta opción, la destacamos en naranja suave
+                        if(esLaQueEligio && !isOnlyRevision) css = "border-orange-200 bg-orange-50 text-orange-600 font-semibold";
+                    }
+                    
+                    optsHtml += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${icon}${opt}</div>`;
+                });
                 optsHtml += '</div>';
 
                 let qFinalText = q.pregunta;
