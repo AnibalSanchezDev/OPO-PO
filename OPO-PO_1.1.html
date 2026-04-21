@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opo-Po | Tramos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 font-sans text-slate-900">
+
+    <div id="app" class="max-w-3xl mx-auto">
+        <div id="setup" class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 mt-10">
+            <h1 class="text-3xl font-black text-indigo-600 mb-2 text-center italic">OPO-PO</h1>
+            
+            <div class="space-y-6">
+                <div class="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200">
+                    <label class="block text-xs font-black text-slate-400 mb-2 uppercase">Cargar examen (.csv)</label>
+                    <input type="file" id="csv" accept=".csv" class="w-full text-sm">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="start('guiado')" class="bg-indigo-600 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">MODO GUIADO</button>
+                    <button onclick="start('simulacion')" class="bg-slate-800 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-black transition-all">SIMULACIÓN</button>
+                    <button onclick="start('revision')" class="bg-emerald-500 text-white p-5 rounded-2xl font-bold shadow-lg hover:bg-emerald-600 transition-all">REVISIÓN</button>
+                </div>
+
+                <div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
+                    <label class="block text-xs font-black text-indigo-400 mb-4 uppercase text-center">Entrenamiento por Tramos (ID Original)</label>
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <span class="text-[10px] font-bold text-indigo-300 ml-2 uppercase">Desde</span>
+                            <input type="number" id="from-id" value="1" class="w-full p-3 bg-white rounded-xl font-bold outline-none border-b-4 border-indigo-400">
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] font-bold text-indigo-300 ml-2 uppercase">Hasta</span>
+                            <input type="number" id="to-id" value="40" class="w-full p-3 bg-white rounded-xl font-bold outline-none border-b-4 border-indigo-400">
+                        </div>
+                        <button onclick="start('tramos')" class="mt-4 bg-indigo-500 text-white px-6 py-3 rounded-xl font-black shadow-md hover:bg-indigo-600 self-end transition-all text-sm">
+                            IR
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-xs font-black text-slate-400 mb-2 uppercase text-center">Nº preguntas para Test Aleatorio:</label>
+                    <input type="number" id="limit" value="20" class="w-full p-3 bg-slate-50 rounded-xl text-center font-bold outline-none border-b-4 border-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz" class="hidden bg-white rounded-3xl shadow-2xl overflow-hidden mt-6 border border-slate-200">
+            <div class="h-3 bg-slate-100"><div id="bar" class="h-full bg-indigo-500 transition-all duration-500"></div></div>
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <span id="meta" class="text-xs font-black text-slate-400 uppercase tracking-widest"></span>
+                    <button onclick="exitToMenu()" class="bg-red-50 text-red-500 px-4 py-2 rounded-full text-xs font-black uppercase hover:bg-red-500 hover:text-white transition-all">
+                        ✖ Salir al Menú
+                    </button>
+                </div>
+                <h2 id="q-text" class="text-xl font-bold text-slate-800 mb-2 leading-relaxed"></h2>
+                <p id="q-real-id" class="text-[10px] text-slate-300 font-mono mb-6 uppercase tracking-widest"></p>
+                <div id="opts" class="space-y-3"></div>
+                <div id="actions" class="mt-10 flex gap-4"></div>
+            </div>
+        </div>
+
+        <div id="results" class="hidden space-y-6 py-10">
+            <div class="bg-white p-10 rounded-3xl shadow-xl border border-slate-200 relative">
+                <button onclick="exitToMenu()" class="absolute top-6 right-6 text-xs font-black text-slate-300 hover:text-red-500 uppercase tracking-tighter transition-all">
+                    ← Volver al Inicio
+                </button>
+                <div class="text-center">
+                    <h2 id="res-title" class="text-2xl font-black mb-4 uppercase italic">Resultado Final</h2>
+                    <p id="score" class="text-7xl font-black text-indigo-600 mb-6"></p>
+                    <button onclick="exitToMenu()" class="bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition-transform">NUEVO EXAMEN</button>
+                </div>
+            </div>
+            <div id="res-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        let db = [], current = [], mode = '', idx = 0, answers = [];
+
+        function exitToMenu() {
+            idx = 0;
+            answers = [];
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('setup').classList.remove('hidden');
+        }
+
+        async function start(m) {
+            const file = document.getElementById('csv').files[0];
+            if(!file) return alert("Por favor, selecciona el archivo CSV generado.");
+            
+            mode = m;
+            const text = await file.text();
+            const lines = text.split(/\r?\n/).filter(l => l.includes(';'));
+            
+            db = lines.slice(1).map(line => {
+                const cells = line.match(/(".*?"|[^;]+)/g).map(c => c.replace(/^"|"$/g, '').trim());
+                return {
+                    idReal: parseInt(cells[0]), 
+                    pregunta: cells[1],
+                    opciones: cells[2].split(' | '),
+                    correcta: parseInt(cells[3]) || 1
+                };
+            });
+
+            if(mode === 'revision') {
+                current = [...db];
+                showResults(true);
+            } else if (mode === 'tramos') {
+                const from = parseInt(document.getElementById('from-id').value);
+                const to = parseInt(document.getElementById('to-id').value);
+                // Filtramos por el ID Real de la primera columna
+                current = db.filter(q => q.idReal >= from && q.idReal <= to);
+                if(current.length === 0) return alert("No hay preguntas en ese tramo.");
+                // En tramos solemos querer el orden correlativo
+                current.sort((a, b) => a.idReal - b.idReal);
+                launchQuiz();
+            } else {
+                db.sort(() => Math.random() - 0.5);
+                current = db.slice(0, parseInt(document.getElementById('limit').value));
+                launchQuiz();
+            }
+        }
+
+        function launchQuiz() {
+            answers = new Array(current.length).fill(null);
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('quiz').classList.remove('hidden');
+            idx = 0;
+            render();
+        }
+
+        function render() {
+            const q = current[idx];
+            document.getElementById('q-text').innerText = q.pregunta;
+            const idRealEl = document.getElementById('q-real-id');
+            if(idRealEl) idRealEl.innerText = `ID Original: ${q.idReal}`;
+
+            document.getElementById('meta').innerText = `Pregunta ${idx + 1} de ${current.length}`;
+            document.getElementById('bar').style.width = `${((idx + 1) / current.length) * 100}%`;
+            
+            const container = document.getElementById('opts');
+            container.innerHTML = '';
+
+            q.opciones.forEach((o, i) => {
+                const b = document.createElement('button');
+                let baseStyle = "w-full text-left p-4 rounded-2xl border-2 transition-all text-sm font-semibold ";
+                if (answers[idx] === i) {
+                    baseStyle += "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-inner";
+                } else {
+                    baseStyle += "border-slate-100 hover:border-indigo-200 hover:bg-slate-50 text-slate-600";
+                }
+                b.className = baseStyle;
+                b.innerText = o;
+                b.onclick = () => select(i, b);
+                container.appendChild(b);
+            });
+            renderNav();
+        }
+
+        function renderNav() {
+            const actions = document.getElementById('actions');
+            const isLast = idx === current.length - 1;
+            const isFirst = idx === 0;
+
+            actions.innerHTML = `
+                <button onclick="goPrev()" ${isFirst ? 'disabled' : ''} 
+                    class="flex-1 p-4 rounded-2xl font-bold border-2 border-slate-200 text-slate-400 disabled:opacity-20">
+                    ← ANTERIOR
+                </button>
+                <button onclick="goNext()" 
+                    class="flex-[2] bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
+                    ${isLast ? 'FINALIZAR' : 'SIGUIENTE →'}
+                </button>
+            `;
+        }
+
+        function select(i, btn) {
+            const q = current[idx];
+            answers[idx] = i;
+            if(mode === 'guiado' || mode === 'tramos') { // En tramos activamos feedback inmediato para estudiar mejor
+                const btns = document.querySelectorAll('#opts button');
+                btns.forEach(b => b.disabled = true);
+                const isOk = (i === q.correcta - 1);
+                btn.className = "w-full text-left p-4 rounded-2xl border-2 font-bold " + (isOk ? "border-green-500 bg-green-50 text-green-700" : "border-red-500 bg-red-50 text-red-700");
+                if(!isOk) btns[q.correcta-1].className = "w-full text-left p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-green-700 font-bold";
+                if(isOk) confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
+            } else {
+                render();
+            }
+        }
+
+        function goPrev() { if (idx > 0) { idx--; render(); } }
+        function goNext() { if (idx < current.length - 1) { idx++; render(); } else { showResults(false); } }
+
+        function showResults(isOnlyRevision) {
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            const list = document.getElementById('res-list');
+            list.innerHTML = '';
+            let hits = 0;
+
+            current.forEach((q, i) => {
+                const uAns = answers[i];
+                const cIdx = q.correcta - 1;
+                const ok = uAns === cIdx;
+                if(ok) hits++;
+                const card = document.createElement('div');
+                card.className = `bg-white p-6 rounded-3xl shadow-sm border-l-[12px] mb-4 ${isOnlyRevision ? 'border-emerald-400' : (ok ? 'border-green-500' : 'border-red-500')}`;
+                let optsHtml = '<div class="mt-4 space-y-2">';
+                q.opciones.forEach((opt, index) => {
+                    let css = (index === cIdx) ? "border-green-500 bg-green-50 text-green-700 font-bold" : (!isOnlyRevision && index === uAns ? "border-red-500 bg-red-50 text-red-700 font-bold" : "border-slate-50 text-slate-400");
+                    let icon = (index === cIdx) ? "✅ " : (!isOnlyRevision && index === uAns ? "❌ " : "");
+                    optsHtml += `<div class="p-3 border-2 rounded-xl text-sm ${css}">${icon}${opt}</div>`;
+                });
+                card.innerHTML = `<p class="font-bold text-slate-800 leading-tight">${i + 1}. ${q.pregunta}</p><p class="text-[9px] text-slate-300 mt-1 uppercase font-mono">(ID: ${q.idReal})</p>${optsHtml}`;
+                list.appendChild(card);
+            });
+            document.getElementById('score').innerText = isOnlyRevision ? "Revisión" : `${hits} / ${current.length}`;
+            if(isOnlyRevision) document.getElementById('res-title').innerText = "Manual de Estudio";
+        }
+    </script>
+</body>
+</html>
